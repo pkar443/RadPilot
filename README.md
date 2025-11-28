@@ -1,30 +1,119 @@
-# React + TypeScript + Vite
+# **AlloyDX RadPilot**
+### *Guided, Consistent, AI-Assisted Radiology Reporting*
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AlloyDX RadPilot is a web-based radiology reporting platform under the **AlloyDX.ai** ecosystem.  
+It enables radiologists to generate **accurate, structured, and LLM-assisted reports** faster, with fewer errors, and with a standardized workflow that reduces variability between practitioners.
 
-Currently, two official plugins are available:
+RadPilot combines a modern two-pane interface with structured questionnaires, DICOM viewing (via OHIF), and AI-powered report generation to streamline clinical reporting.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> ⚠️ **Pilot Use Only**  
+> This tool is currently in **pilot testing**. All reports must be reviewed, corrected, and signed by a qualified radiologist. Uploaded images and metadata may be used in **de-identified form** for quality improvement and AI model training.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🚀 **Features**
 
-- Configure the top-level `parserOptions` property like this:
+### **Two-Pane Radiology Workspace**
+- **Left Pane:** Full OHIF-powered DICOM viewer  
+  - Pan / Zoom  
+  - Window-level  
+  - Slice scroll  
+  - Multi-series support  
+  - Measurements & annotations  
+- **Right Pane:** Structured, one-question-at-a-time reporting assistant
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+### **Minimal Input, Maximum Accuracy**
+- Radiologist only answers focused, organ-specific questions  
+- System captures structured JSON  
+- LLM generates a complete draft report:  
+  - Technique  
+  - Findings (organ-wise)  
+  - Impression  
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### **Supported Modalities (MVP)**
+- **Abdominal Ultrasound**  
+- **Abdominal CT Scan**  
+- **Chest X-ray**  
+
+### **Patient & Study Management**
+- New patient via NHI lookup or manual entry  
+- Existing patient history with previous studies  
+- Secure upload of DICOM or JPG/PNG images  
+- Auto-linking studies via StudyInstanceUID  
+- Radiologist dashboard with recent activity
+
+### **Report Generation & Export**
+- AI-generated but fully editable report  
+- Standardized formatting with:
+  - Logo  
+  - Patient details  
+  - Organ-wise findings  
+  - Final impression  
+  - Radiologist details (from login profile)  
+  - Study metadata  
+- **Download PDF**, print, or **email to patient**  
+- **QR code** embedded in PDF for secure digital download
+
+### **Data Collection for Future AI Training**
+- Stores:
+  - Structured answers  
+  - LLM-generated draft  
+  - Radiologist final report  
+  - Study metadata  
+- Used to build future multimodal training datasets  
+- Fully de-identified pipeline
+
+### **Part of AlloyDX Platform**
+- RadPilot (Radiologists) — *current app*  
+- Multimodal Precision Health (Doctors) — *coming soon*  
+  - Fuse radiology reports, lab results, & clinical findings  
+  - Inspired by MedGemma-style multimodal architectures
+
+---
+
+## 🧱 **System Architecture**
+
+### **Frontend**
+- React / Next.js
+- Embedded OHIF Viewer (iframe or native integration)
+- Styled components / Material UI
+- Secure sign-in & role-based workflow
+
+### **Backend**
+- FastAPI or Node.js  
+- PostgreSQL / Supabase for structured storage  
+- S3-compatible storage for DICOM files  
+- Orthanc DICOM server with DICOMweb enabled  
+- LLM report generation via OpenAI or local models
+
+### **Data Flow**
+`Radiologist → Upload Images → Orthanc → OHIF Viewer → Structured Q&A → LLM → Editable Report → Export/Save`
+
+---
+
+## 📁 **Suggested Project Structure**
+
+```plaintext
+AlloyDX-RadPilot/
+│
+├── frontend/
+│   ├── components/
+│   ├── pages/
+│   ├── styles/
+│   ├── ohif-viewer/ (embedded or forked OHIF)
+│   └── utils/
+│
+├── backend/
+│   ├── api/
+│   ├── models/
+│   ├── services/
+│   ├── routers/
+│   └── utils/
+│
+├── dicom/
+│   └── orthanc-config/
+│
+├── docs/
+│   └── specs/
+│
+└── README.md
