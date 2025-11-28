@@ -1,0 +1,17 @@
+{
+  "clinical_indication": "Right upper quadrant pain",
+  "liver": {
+    "size": "Normal",
+    "echotexture": "Normal",
+    "focal_lesions": "No"
+  },
+  "gallbladder_status": "Present",
+  "gallstones": "No",
+  "cbd_diameter_mm": 4,
+  "pancreas": "Fully visualized, normal",
+  "spleen": "Normal size",
+  "kidneys": "No hydronephrosis",
+  "aorta": "Normal calibre",
+  "ascites": "None",
+  "impression_hint": "No acute abnormality"
+}

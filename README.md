@@ -117,3 +117,49 @@ AlloyDX-Radiomed/
 │   └── specs/
 │
 └── README.md
+
+## Backend (FastAPI) Quickstart
+
+1) Install deps  
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+2) Set env vars (example)  
+```bash
+export OPENAI_API_KEY=sk-...
+export JWT_SECRET_KEY=supersecret
+export FRONTEND_ORIGIN=http://localhost:5173
+export UPLOAD_DIR=./uploads
+```
+
+3) Run API  
+```bash
+uvicorn backend.main:app --reload --port 8000
+```
+
+4) Run tests  
+```bash
+pytest backend/tests/test_reports.py
+```
+
+4) Seed dummy data (radiologist + patient + US study)  
+```bash
+curl -X POST http://localhost:8000/api/seed
+```
+
+5) Example auth + draft report  
+```bash
+# login (after seed)
+curl -X POST -d "username=dr.test@example.com&password=Password123!" http://localhost:8000/api/auth/login
+
+# generate draft (replace TOKEN and STUDY_ID)
+curl -X POST http://localhost:8000/api/studies/1/report/draft \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"structured_answers":{"liver":"Normal","gallbladder_status":"Present","gallstones":"No"}}'
+```
+
+Backend entrypoint: `backend/main.py` (FastAPI). CORS is enabled for `FRONTEND_ORIGIN`, uploads land in `UPLOAD_DIR/{study_id}/`, and draft/finalize/report download endpoints live under `/api`.
