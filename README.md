@@ -1,10 +1,10 @@
-# **AlloyDX RadPilot**
+# **AlloyDX Radiomed**
 ### *Guided, Consistent, AI-Assisted Radiology Reporting*
 
-AlloyDX RadPilot is a web-based radiology reporting platform under the **AlloyDX.ai** ecosystem.  
+AlloyDX Radiomed is a web-based radiology reporting platform under the **AlloyDX.ai** ecosystem.  
 It enables radiologists to generate **accurate, structured, and LLM-assisted reports** faster, with fewer errors, and with a standardized workflow that reduces variability between practitioners.
 
-RadPilot combines a modern two-pane interface with structured questionnaires, DICOM viewing (via OHIF), and AI-powered report generation to streamline clinical reporting.
+Radiomed combines a modern two-pane interface with structured questionnaires, DICOM viewing (via OHIF), and AI-powered report generation to streamline clinical reporting.
 
 > ⚠️ **Pilot Use Only**  
 > This tool is currently in **pilot testing**. All reports must be reviewed, corrected, and signed by a qualified radiologist. Uploaded images and metadata may be used in **de-identified form** for quality improvement and AI model training.
@@ -64,7 +64,7 @@ RadPilot combines a modern two-pane interface with structured questionnaires, DI
 - Fully de-identified pipeline
 
 ### **Part of AlloyDX Platform**
-- RadPilot (Radiologists) — *current app*  
+- Radiomed (Radiologists) — *current app*  
 - Multimodal Precision Health (Doctors) — *coming soon*  
   - Fuse radiology reports, lab results, & clinical findings  
   - Inspired by MedGemma-style multimodal architectures
@@ -94,7 +94,7 @@ RadPilot combines a modern two-pane interface with structured questionnaires, DI
 ## 📁 **Suggested Project Structure**
 
 ```plaintext
-AlloyDX-RadPilot/
+AlloyDX-Radiomed/
 │
 ├── frontend/
 │   ├── components/

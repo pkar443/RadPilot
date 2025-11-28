@@ -11,7 +11,7 @@ import ReportPreview from './ReportPreview';
 export default function ReportingInterface() {
   const { studyId } = useParams();
   const navigate = useNavigate();
-  const { studies, getPatientById } = useApp();
+  const { studies, getPatientById, setCurrentAnswers } = useApp();
   const [showReport, setShowReport] = useState(false);
 
   const study = studies.find(s => s.id === studyId);
@@ -22,6 +22,12 @@ export default function ReportingInterface() {
       navigate('/');
     }
   }, [study, navigate]);
+
+  useEffect(() => {
+    // Clear any previous questionnaire responses when switching studies
+    setCurrentAnswers([]);
+    setShowReport(false);
+  }, [studyId, setCurrentAnswers]);
 
   if (!study || !patient) {
     return null;

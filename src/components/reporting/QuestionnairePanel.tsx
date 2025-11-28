@@ -63,6 +63,11 @@ export default function QuestionnairePanel({ study, onReportGenerated }: Props) 
     currentAnswers.some(a => a.questionId === q.id)
   ).length;
 
+  useEffect(() => {
+    // Reset the wizard position whenever the study or visible question set changes
+    setCurrentQuestionIndex(0);
+  }, [study.id, visibleQuestions.length]);
+
   if (!currentQuestion) {
     return <div className="p-6">Loading questions...</div>;
   }

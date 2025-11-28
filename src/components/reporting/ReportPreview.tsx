@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Study, Patient, Report } from '@/types/radpilot';
+import { useEffect, useState } from 'react';
+import { Study, Patient, Report, QuestionAnswer, Modality } from '@/types/radpilot';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,18 +22,28 @@ export default function ReportPreview({ study, patient }: Props) {
   const [report, setReport] = useState<Report>({
     id: `r${Date.now()}`,
     studyId: study.id,
-    technique: generateTechnique(study.modality),
-    findings: generateFindings(currentAnswers),
-    impression: generateImpression(currentAnswers),
+    technique: generateTechnique(study.modality, currentAnswers),
+    findings: generateFindings(study.modality, currentAnswers),
+    impression: generateImpression(study.modality, currentAnswers),
     status: 'draft',
   });
+
+  useEffect(() => {
+    if (report.status === 'finalized') return;
+    setReport((prev) => ({
+      ...prev,
+      technique: generateTechnique(study.modality, currentAnswers),
+      findings: generateFindings(study.modality, currentAnswers),
+      impression: generateImpression(study.modality, currentAnswers),
+    }));
+  }, [currentAnswers, study.modality, report.status]);
 
   const handleRegenerate = () => {
     setReport({
       ...report,
-      technique: generateTechnique(study.modality),
-      findings: generateFindings(currentAnswers),
-      impression: generateImpression(currentAnswers),
+      technique: generateTechnique(study.modality, currentAnswers),
+      findings: generateFindings(study.modality, currentAnswers),
+      impression: generateImpression(study.modality, currentAnswers),
     });
   };
 
@@ -237,35 +247,186 @@ export default function ReportPreview({ study, patient }: Props) {
   );
 }
 
-// Helper functions to generate report content
-function generateTechnique(modality: string): string {
+// Helper functions to generate report content using current answers
+function formatValue(value: string | number | boolean | string[] | undefined, fallback = 'not documented') {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value);
+}
+
+function getAnswerValue(answers: QuestionAnswer[], id: string) {
+  return answers.find((a) => a.questionId === id)?.value;
+}
+
+function generateTechnique(modality: Modality, answers: QuestionAnswer[]): string {
   switch (modality) {
-    case 'us-abdomen':
-      return 'Ultrasound examination of the abdomen was performed using a curvilinear transducer. Multiple images were obtained in transverse and longitudinal planes.';
-    case 'ct-abdomen':
-      return 'CT examination of the abdomen and pelvis was performed following administration of intravenous contrast. Images were acquired in the portal venous phase. Multiplanar reconstructions were obtained.';
-    case 'chest-xray':
-      return 'PA and lateral chest radiographs were obtained with the patient in the erect position. Adequate inspiration and penetration. No rotation.';
+    case 'us-abdomen': {
+      const fasting = formatValue(getAnswerValue(answers, 'us-2'), 'fasting status not provided').toLowerCase();
+      return `Ultrasound examination of the abdomen performed with a curvilinear transducer. Multiple transverse and longitudinal images acquired; patient ${fasting}.`;
+    }
+    case 'ct-abdomen': {
+      const contrast = formatValue(getAnswerValue(answers, 'ct-2'), 'contrast status not recorded').toLowerCase();
+      const phase = formatValue(getAnswerValue(answers, 'ct-3'), 'phase not recorded');
+      return `CT abdomen/pelvis performed with ${contrast}. Images acquired in the ${phase.toLowerCase()} phase with multiplanar reconstructions.`;
+    }
+    case 'chest-xray': {
+      const projection = formatValue(getAnswerValue(answers, 'cxr-1'), 'standard projection').toUpperCase();
+      const position = formatValue(getAnswerValue(answers, 'cxr-2'), 'default position').toLowerCase();
+      return `${projection} chest radiograph obtained with the patient ${position}. Inspiration and penetration assessed at acquisition.`;
+    }
     default:
       return 'Standard imaging protocol was followed.';
   }
 }
 
-function generateFindings(answers: any[]): string {
-  // In production, this would use AI to generate findings based on answers
-  return `The examination demonstrates normal anatomical structures with no significant abnormalities identified.
+function generateFindings(modality: Modality, answers: QuestionAnswer[]): string {
+  const value = (id: string, fallback?: string) => formatValue(getAnswerValue(answers, id), fallback);
+  switch (modality) {
+    case 'us-abdomen': {
+      const hepaticLesions = getAnswerValue(answers, 'us-5') === 'Yes';
+      const gallstones = getAnswerValue(answers, 'us-10') === 'Yes';
+      const ascites = value('us-32', 'Not assessed');
+      const lymphNodes = value('us-33', 'Not assessed');
+      return `Clinical notes: ${value('us-1', 'None provided')}
 
-Liver: Normal size and echotexture. No focal lesions.
-Gallbladder: Normal wall thickness. No stones or pericholecystic fluid.
-Bile ducts: Common bile duct measures within normal limits. No intrahepatic duct dilatation.
-Pancreas: Visualized portions appear normal.
-Spleen: Normal size and echotexture.
-Kidneys: Both kidneys are normal in size with preserved cortical thickness. No hydronephrosis or calculi.
-Aorta: Normal caliber, no aneurysm.
+Liver: ${value('us-3', 'Size not recorded')}, ${value('us-4', 'echotexture not recorded')}. ${
+        hepaticLesions
+          ? `Focal lesions present (count: ${value('us-6', 'not recorded')}, largest ${value('us-7', 'N/A')} cm, ${value('us-8', 'characteristics not recorded')}).`
+          : 'No focal hepatic lesions.'
+      }
+Gallbladder: Wall ${value('us-9', 'thickness not recorded')}; gallstones ${value('us-10')}${
+        gallstones ? ` (${value('us-11', 'number not recorded')}, largest ${value('us-12', 'size not recorded')} mm).` : '.'
+      } Pericholecystic fluid: ${value('us-13')}.
+Bile ducts: Common bile duct ${value('us-14')} mm; intrahepatic duct dilatation ${value('us-15')}.
+Pancreas: Visualization ${value('us-16')}${
+        value('us-16') === 'Fully visualized'
+          ? `; duct ${value('us-17', 'diameter not recorded')} mm; lesions ${value('us-18')}.`
+          : '.'
+      }
+Spleen: ${value('us-19')} with length ${value('us-20')} cm; lesions ${value('us-21')}.
+Kidneys: Right ${value('us-22')} cm, left ${value('us-23')} cm; cortex ${value('us-24')} (R) / ${value('us-25')} (L); hydronephrosis ${value('us-26')}; calculi ${value('us-27')}; masses ${value('us-28')}.
+Aorta: Visualization ${value('us-29')}${
+        value('us-29') === 'Fully visualized'
+          ? `; maximal diameter ${value('us-30', 'not recorded')} mm; aneurysm ${value('us-31')}.`
+          : '.'
+      }
+Other: Ascites ${ascites}; lymphadenopathy ${lymphNodes}. Additional findings: ${value('us-34', 'None reported')}.`;
+    }
+    case 'ct-abdomen': {
+      const lesions = getAnswerValue(answers, 'ct-7') === 'Yes';
+      const lymphNodes = value('ct-37', 'Not assessed');
+      const ascites = value('ct-39', 'Not assessed');
+      return `Clinical notes: ${value('ct-1', 'None provided')}
 
-No ascites or lymphadenopathy identified.`;
+Liver: ${value('ct-4')} size with ${value('ct-5')} contour and ${value('ct-6')} attenuation. ${
+        lesions
+          ? `Focal lesions present (count ${value('ct-8')}, largest ${value('ct-9')} cm, enhancement ${value('ct-10')}).`
+          : 'No focal hepatic lesions.'
+      }
+Gallbladder/Bile ducts: Wall ${value('ct-11')}; gallstones ${value('ct-12')}; pericholecystic fluid ${value('ct-13')}. Common bile duct ${value('ct-14')} mm; intrahepatic duct dilatation ${value('ct-15')}.
+Pancreas: Size ${value('ct-16')}; duct ${value('ct-17')} mm; enhancement ${value('ct-18')}; mass ${value('ct-19')}; peripancreatic fluid ${value('ct-20')}.
+Spleen: ${value('ct-21')}; splenic lesions ${value('ct-22')}.
+Kidneys/Adrenals: Right ${value('ct-23')}, left ${value('ct-24')}; renal enhancement ${value('ct-25')}; hydronephrosis ${value('ct-26')}; calculi ${value('ct-27')}; masses ${value('ct-28')}; adrenals ${value('ct-29')}.
+Bowel: Wall thickening ${value('ct-30')}; obstruction ${value('ct-31')}; pneumatosis ${value('ct-32')}.
+Vessels: Aorta ${value('ct-33')} mm; aneurysm ${value('ct-34')}; portal vein ${value('ct-35')}; mesenteric vessels ${value('ct-36')}.
+Lymph nodes: ${lymphNodes}${lymphNodes !== 'None' ? `, largest ${value('ct-38', 'size not recorded')} mm` : ''}.
+Peritoneum/Other: Ascites ${ascites}; peritoneal thickening ${value('ct-40')}; free air ${value('ct-41')}; hernias ${value('ct-42')}. Additional findings: ${value('ct-43', 'None reported')}.`;
+    }
+    case 'chest-xray': {
+      const effusion = value('cxr-13', 'Not recorded');
+      const pneumothorax = value('cxr-14', 'Not recorded');
+      const lines = value('cxr-25', 'Not recorded');
+      return `Technical: Projection ${value('cxr-1')}, patient ${value('cxr-2').toLowerCase()}, inspiration ${value('cxr-3')}, rotation ${value('cxr-4')}, penetration ${value('cxr-5')}.
+
+Airways: Trachea ${value('cxr-6')}; carina angle ${value('cxr-7')}.
+Lungs: Volumes ${value('cxr-8')}; airspace opacification ${value('cxr-9')}; interstitial pattern ${value('cxr-10')}; nodules/masses ${value('cxr-11')}; cavitation ${value('cxr-12')}.
+Pleura: Effusion ${effusion}; pneumothorax ${pneumothorax}; pleural thickening ${value('cxr-15')}.
+Heart/Mediastinum: Cardiac size ${value('cxr-16')}; cardiothoracic ratio ${value('cxr-17')}; cardiac contour ${value('cxr-18')}; mediastinum ${value('cxr-19')}; hila ${value('cxr-20')}.
+Bones/Soft tissues: Rib fractures ${value('cxr-21')}; bone lesions ${value('cxr-22')}; spine alignment ${value('cxr-23')}; subcutaneous emphysema ${value('cxr-24')}.
+Lines/Tubes: ${lines}${
+        lines === 'Present'
+          ? `; ETT ${value('cxr-26')}; NGT ${value('cxr-27')}; central line ${value('cxr-28')}.`
+          : '.'
+      }
+Other: ${value('cxr-29', 'No additional findings reported')}.`;
+    }
+    default:
+      return 'Findings not available for this modality.';
+  }
 }
 
-function generateImpression(answers: any[]): string {
-  return 'Normal abdominal ultrasound examination. No significant abnormality detected.';
+function generateImpression(modality: Modality, answers: QuestionAnswer[]): string {
+  const pick = (id: string) => getAnswerValue(answers, id);
+  const value = (id: string, fallback?: string) => formatValue(getAnswerValue(answers, id), fallback);
+
+  switch (modality) {
+    case 'us-abdomen': {
+      const highlights: string[] = [];
+      if (pick('us-5') === 'Yes') {
+        highlights.push(`Hepatic lesions noted (largest ${value('us-7', 'size not recorded')} cm).`);
+      }
+      if (pick('us-10') === 'Yes') {
+        highlights.push(`Cholelithiasis with ${value('us-11', 'stones not quantified')}${value('us-12', '') ? `, largest ${value('us-12')} mm` : ''}.`);
+      }
+      if (pick('us-31') === 'Yes') {
+        highlights.push('Abdominal aortic aneurysm.');
+      }
+      if (pick('us-26') && pick('us-26') !== 'None') {
+        highlights.push(`Hydronephrosis: ${value('us-26')}.`);
+      }
+      if (pick('us-32') && pick('us-32') !== 'None') {
+        highlights.push(`Ascites: ${value('us-32')}.`);
+      }
+      if (highlights.length === 0) {
+        return 'No significant abnormality detected on abdominal ultrasound.';
+      }
+      return highlights.join(' ');
+    }
+    case 'ct-abdomen': {
+      const highlights: string[] = [];
+      if (pick('ct-7') === 'Yes') {
+        highlights.push(`Hepatic lesions (largest ${value('ct-9', 'size not recorded')} cm, enhancement ${value('ct-10', 'pattern not recorded')}).`);
+      }
+      if (pick('ct-26') && pick('ct-26') !== 'None') {
+        highlights.push(`Hydronephrosis: ${value('ct-26')}.`);
+      }
+      if (pick('ct-34') === 'Present') {
+        highlights.push('Aortic aneurysm.');
+      }
+      if (pick('ct-39') && pick('ct-39') !== 'None') {
+        highlights.push(`Ascites: ${value('ct-39')}.`);
+      }
+      if (pick('ct-41') === 'Present') {
+        highlights.push('Free intraperitoneal air.');
+      }
+      if (highlights.length === 0) {
+        return 'No acute CT abdomen findings of significance.';
+      }
+      return highlights.join(' ');
+    }
+    case 'chest-xray': {
+      const highlights: string[] = [];
+      if (pick('cxr-9') && pick('cxr-9') !== 'None') {
+        highlights.push(`Airspace opacification in ${value('cxr-9')}.`);
+      }
+      if (pick('cxr-13') && pick('cxr-13') !== 'None') {
+        highlights.push(`Pleural effusion: ${value('cxr-13')}.`);
+      }
+      if (pick('cxr-14') && pick('cxr-14') !== 'None') {
+        highlights.push(`Pneumothorax: ${value('cxr-14')}.`);
+      }
+      if (pick('cxr-11') && pick('cxr-11') !== 'None') {
+        highlights.push(`Pulmonary nodules/mass: ${value('cxr-11')}.`);
+      }
+      if (pick('cxr-25') === 'Present') {
+        highlights.push('Lines/tubes present—see details above.');
+      }
+      if (highlights.length === 0) {
+        return 'No acute cardiopulmonary process identified.';
+      }
+      return highlights.join(' ');
+    }
+    default:
+      return 'Impression unavailable for this modality.';
+  }
 }

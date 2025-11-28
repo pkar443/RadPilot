@@ -49,7 +49,7 @@ export default function Sidebar() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="h-2 w-2 rounded-full bg-blue-600"></div>
-            <span className="text-sm font-medium text-blue-900">RadPilot</span>
+            <span className="text-sm font-medium text-blue-900">Radiomed</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg opacity-60">
             <div className="h-2 w-2 rounded-full bg-gray-400"></div>

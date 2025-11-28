@@ -35,7 +35,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome to RadPilot</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Welcome to Radiomed</h1>
         <p className="text-gray-600 mt-2">Guided radiology reporting with integrated DICOM viewing</p>
       </div>
 
